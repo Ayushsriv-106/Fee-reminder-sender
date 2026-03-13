@@ -77,11 +77,16 @@ header {
 
 /* UPLOAD */
 .upload-area {
-  border:2.5px dashed var(--border); border-radius:var(--r);
+  border:2.5px dashed var(--wa); border-radius:var(--r);
   padding:24px 16px; text-align:center; cursor:pointer;
-  transition:all 0.2s; background:var(--bg); position:relative;
+  transition:all 0.2s; background:#f0fff4; position:relative;
+  animation: pulse-border 2s ease-in-out infinite;
 }
-.upload-area:hover, .upload-area.drag { border-color:var(--wa); background:var(--wa-light); }
+@keyframes pulse-border {
+  0%,100% { border-color: var(--wa); box-shadow: 0 0 0 0 rgba(37,211,102,0.2); }
+  50% { border-color: var(--wa-dark); box-shadow: 0 0 0 6px rgba(37,211,102,0); }
+}
+.upload-area:hover, .upload-area.drag { border-color:var(--wa-dark); background:var(--wa-light); animation:none; }
 .upload-area input { position:absolute; inset:0; opacity:0; cursor:pointer; }
 .upload-area .uico { font-size:32px; margin-bottom:8px; }
 .upload-area h4 { font-size:13px; font-weight:800; margin-bottom:3px; }
@@ -498,6 +503,9 @@ textarea.editor:focus { border-color:var(--wa); }
               <button class="btn btn-ghost btn-sm" onclick="copyAllLinks()">
                 📋 Copy All Links
               </button>
+              <span style="font-size:11px;color:var(--muted);margin-left:auto;">
+                ⬆ Upload CSV first, then click Send
+              </span>
             </div>
           </div>
 
@@ -511,7 +519,14 @@ textarea.editor:focus { border-color:var(--wa); }
               </div>
             </div>
             <div id="rec-table">
-              <div class="empty"><div class="ei">📤</div><h3>No data yet</h3><p>Upload your Simption CSV export to see recipients</p></div>
+              <div class="empty">
+                <div class="ei">📤</div>
+                <h3>No data yet</h3>
+                <p>Upload your Simption CSV export using the panel on the left</p>
+                <div style="margin-top:16px;background:#f0fdf4;border:1.5px dashed #86efac;border-radius:10px;padding:14px 20px;display:inline-block;font-size:13px;color:#15803d;font-weight:700;">
+                  ← Step 1: Drop your CSV in the left panel
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -1176,8 +1191,10 @@ dz.addEventListener('dragleave',()=>dz.classList.remove('drag'));
 dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('drag');loadFile(e.dataTransfer.files[0]);});
 
 // ── INIT ──────────────────────────────────────────────────────────────────
-pickType(document.querySelector('.type-card.active'),'fee_reminder');
-renderHistory();
+document.addEventListener('DOMContentLoaded', function() {
+  pickType(document.querySelector('.type-card.active'), 'fee_reminder');
+  renderHistory();
+});
 </script>
 </body>
 </html>

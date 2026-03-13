@@ -1,0 +1,1115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Free WA Sender — Gopalji Memorial School</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<style>
+:root {
+  --wa: #25D366;
+  --wa-dark: #075E54;
+  --wa-mid: #128C7E;
+  --wa-light: #dcfce7;
+  --wa-chat: #ece5dd;
+  --bg: #f0f2f5;
+  --white: #fff;
+  --border: #e5e7eb;
+  --text: #111827;
+  --muted: #6b7280;
+  --warn: #f59e0b;
+  --danger: #ef4444;
+  --font: 'Nunito', sans-serif;
+  --mono: 'JetBrains Mono', monospace;
+  --r: 14px;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:var(--font); background:var(--bg); color:var(--text); min-height:100vh; }
+
+/* HEADER */
+header {
+  background: linear-gradient(135deg, var(--wa-dark) 0%, var(--wa-mid) 100%);
+  padding: 0 32px;
+  height: 64px;
+  display: flex; align-items: center; justify-content: space-between;
+  box-shadow: 0 2px 12px rgba(7,94,84,0.3);
+  position: sticky; top:0; z-index:50;
+}
+.brand { display:flex; align-items:center; gap:12px; }
+.brand-icon {
+  width:40px; height:40px; background:var(--wa); border-radius:12px;
+  display:flex; align-items:center; justify-content:center; font-size:22px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+.brand h1 { font-size:16px; font-weight:800; color:#fff; letter-spacing:-0.3px; }
+.brand p { font-size:11px; color:rgba(255,255,255,0.65); margin-top:1px; }
+
+.header-tabs { display:flex; gap:2px; background:rgba(255,255,255,0.12); padding:4px; border-radius:10px; }
+.htab {
+  padding:7px 18px; border-radius:7px; font-size:13px; font-weight:700;
+  cursor:pointer; color:rgba(255,255,255,0.65); transition:all 0.2s;
+  border:none; background:none; font-family:var(--font);
+}
+.htab:hover { color:#fff; }
+.htab.active { background:rgba(255,255,255,0.18); color:#fff; }
+
+.header-right { display:flex; align-items:center; gap:10px; }
+.pill {
+  background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.2);
+  border-radius:20px; padding:5px 13px; font-size:12px; color:#fff; font-weight:600;
+  display:flex; align-items:center; gap:6px;
+}
+.pill span { width:8px; height:8px; background:var(--wa); border-radius:50%; box-shadow:0 0 6px var(--wa); display:inline-block; }
+
+/* LAYOUT */
+.wrap { display:grid; grid-template-columns:320px 1fr; min-height:calc(100vh - 64px); }
+
+/* SIDEBAR */
+.sidebar {
+  background:var(--white); border-right:1px solid var(--border);
+  padding:20px; overflow-y:auto; max-height:calc(100vh - 64px);
+  position:sticky; top:64px;
+}
+
+.slabel { font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:1.5px; color:var(--muted); margin:18px 0 10px; }
+.slabel:first-child { margin-top:0; }
+
+/* UPLOAD */
+.upload-area {
+  border:2.5px dashed var(--border); border-radius:var(--r);
+  padding:24px 16px; text-align:center; cursor:pointer;
+  transition:all 0.2s; background:var(--bg); position:relative;
+}
+.upload-area:hover, .upload-area.drag { border-color:var(--wa); background:var(--wa-light); }
+.upload-area input { position:absolute; inset:0; opacity:0; cursor:pointer; }
+.upload-area .uico { font-size:32px; margin-bottom:8px; }
+.upload-area h4 { font-size:13px; font-weight:800; margin-bottom:3px; }
+.upload-area p { font-size:11px; color:var(--muted); }
+
+.file-badge {
+  margin-top:10px; background:var(--wa-light);
+  border:1px solid rgba(37,211,102,0.3); border-radius:10px;
+  padding:10px 14px; display:flex; align-items:center; gap:10px;
+  animation: pop 0.3s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes pop { from{transform:scale(0.9);opacity:0} to{transform:scale(1);opacity:1} }
+.file-badge .fi { font-size:22px; }
+.file-badge .fn { font-size:12px; font-weight:700; color:var(--wa-dark); }
+.file-badge .fr { font-size:11px; color:var(--muted); }
+
+/* COLUMN MAP */
+.map-grid { display:flex; flex-direction:column; gap:7px; }
+.map-row { display:flex; align-items:center; gap:8px; }
+.map-key { font-size:11px; font-weight:700; color:var(--muted); width:90px; flex-shrink:0; }
+.map-row select {
+  flex:1; background:var(--bg); border:1px solid var(--border);
+  border-radius:7px; padding:6px 8px; font-size:11px; font-family:var(--font);
+  color:var(--text); outline:none; transition:border-color 0.2s;
+}
+.map-row select:focus { border-color:var(--wa); }
+
+/* FILTERS */
+.filter-stack { display:flex; flex-direction:column; gap:8px; }
+.fitem label { display:block; font-size:11px; font-weight:700; color:var(--muted); margin-bottom:4px; }
+.fitem select, .fitem input {
+  width:100%; background:var(--bg); border:1px solid var(--border);
+  border-radius:8px; padding:8px 10px; font-size:12px; font-family:var(--font);
+  color:var(--text); outline:none;
+}
+.fitem select:focus, .fitem input:focus { border-color:var(--wa); }
+
+/* MAIN */
+.main { padding:24px; overflow-y:auto; }
+.page { display:none; }
+.page.active { display:block; }
+
+/* HOW IT WORKS BANNER */
+.how-banner {
+  background: linear-gradient(135deg, var(--wa-dark), var(--wa-mid));
+  border-radius:16px; padding:20px 24px; margin-bottom:22px;
+  display:flex; gap:24px; align-items:center;
+  box-shadow: 0 4px 20px rgba(7,94,84,0.2);
+}
+.how-step { display:flex; align-items:center; gap:10px; flex:1; }
+.how-num {
+  width:32px; height:32px; background:rgba(255,255,255,0.18);
+  border-radius:50%; display:flex; align-items:center; justify-content:center;
+  font-size:14px; font-weight:800; color:#fff; flex-shrink:0;
+}
+.how-text { font-size:12px; color:rgba(255,255,255,0.85); font-weight:600; line-height:1.4; }
+.how-arrow { color:rgba(255,255,255,0.4); font-size:18px; }
+
+/* MSG TYPE GRID */
+.type-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:22px; }
+.type-card {
+  background:var(--white); border:2px solid var(--border);
+  border-radius:var(--r); padding:14px 12px; cursor:pointer;
+  transition:all 0.2s; text-align:center;
+}
+.type-card:hover { border-color:var(--wa); transform:translateY(-2px); box-shadow:0 6px 20px rgba(37,211,102,0.12); }
+.type-card.active { border-color:var(--wa); background:var(--wa-light); }
+.type-card .ticon { font-size:24px; margin-bottom:6px; }
+.type-card .tname { font-size:11px; font-weight:800; }
+.type-card .tdesc { font-size:10px; color:var(--muted); margin-top:2px; line-height:1.4; }
+
+/* COMPOSE + PREVIEW */
+.compose-row { display:grid; grid-template-columns:1fr 300px; gap:18px; align-items:start; }
+
+.card { background:var(--white); border:1px solid var(--border); border-radius:var(--r); padding:20px; }
+.card-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+.card-head h3 { font-size:14px; font-weight:800; }
+
+textarea.editor {
+  width:100%; min-height:150px; background:var(--bg);
+  border:1px solid var(--border); border-radius:10px;
+  padding:13px; font-family:var(--mono); font-size:12.5px;
+  color:var(--text); line-height:1.7; resize:vertical; outline:none;
+  transition:border-color 0.2s;
+}
+textarea.editor:focus { border-color:var(--wa); }
+
+.chips { display:flex; flex-wrap:wrap; gap:5px; margin-top:8px; }
+.chip {
+  background:#f0fdf4; border:1px solid #bbf7d0; color:var(--wa-dark);
+  font-size:11px; font-family:var(--mono); padding:3px 9px;
+  border-radius:5px; cursor:pointer; transition:all 0.15s; font-weight:600;
+}
+.chip:hover { background:var(--wa); color:#fff; border-color:var(--wa); }
+
+.lang-btns { display:flex; gap:4px; }
+.lang-btn {
+  padding:5px 12px; border-radius:6px; font-size:11px; font-weight:700;
+  cursor:pointer; border:1px solid var(--border); background:var(--bg);
+  font-family:var(--font); transition:all 0.15s;
+}
+.lang-btn.active { background:var(--wa); color:#fff; border-color:var(--wa); }
+
+/* ACTION BAR */
+.action-bar {
+  display:flex; gap:10px; margin-top:14px; flex-wrap:wrap; align-items:center;
+  padding:14px; background:var(--bg); border-radius:10px;
+  border:1px solid var(--border);
+}
+.btn {
+  padding:10px 18px; border-radius:9px; font-size:13px; font-weight:800;
+  font-family:var(--font); cursor:pointer; border:none; transition:all 0.2s;
+  display:flex; align-items:center; gap:6px;
+}
+.btn-wa { background:var(--wa); color:#fff; box-shadow:0 3px 10px rgba(37,211,102,0.3); }
+.btn-wa:hover { background:var(--wa-mid); transform:translateY(-1px); box-shadow:0 6px 16px rgba(37,211,102,0.4); }
+.btn-csv { background:var(--wa-dark); color:#fff; }
+.btn-csv:hover { background:var(--wa-mid); }
+.btn-ghost { background:var(--white); border:1.5px solid var(--border); color:var(--text); }
+.btn-ghost:hover { border-color:var(--wa); color:var(--wa-dark); }
+.btn-sm { padding:7px 13px; font-size:12px; }
+.btn-danger-sm { background:#fee2e2; color:var(--danger); border:1px solid #fecaca; padding:7px 13px; font-size:12px; }
+
+/* PHONE */
+.phone-outer {
+  background:#1c1c1e; border-radius:40px; padding:10px;
+  box-shadow:0 20px 50px rgba(0,0,0,0.25), inset 0 0 0 1px rgba(255,255,255,0.06);
+}
+.phone-inner { background:var(--wa-chat); border-radius:32px; overflow:hidden; }
+.phone-top {
+  background:var(--wa-dark); padding:10px 14px 8px;
+  display:flex; align-items:center; gap:8px;
+}
+.p-avatar {
+  width:32px; height:32px; background:var(--wa); border-radius:50%;
+  display:flex; align-items:center; justify-content:center; font-size:15px;
+}
+.p-name { font-size:13px; font-weight:700; color:#fff; }
+.p-status { font-size:10px; color:rgba(255,255,255,0.6); }
+.phone-msgs { padding:14px; min-height:260px; display:flex; flex-direction:column; justify-content:flex-end; gap:8px; }
+.wa-msg {
+  background:#fff; border-radius:0 10px 10px 10px;
+  padding:10px 12px; max-width:95%; font-size:11.5px; line-height:1.65;
+  color:#111; box-shadow:0 1px 2px rgba(0,0,0,0.08); white-space:pre-wrap; word-break:break-word;
+}
+.wa-time { font-size:10px; color:#999; text-align:right; margin-top:4px; }
+
+/* RECIPIENT PANEL */
+.rec-panel { margin-top:18px; }
+.rec-toolbar {
+  display:flex; align-items:center; justify-content:space-between;
+  margin-bottom:10px; flex-wrap:wrap; gap:8px;
+}
+.rec-count { font-size:13px; font-weight:700; }
+.rec-count span { color:var(--wa-dark); }
+
+.rec-table { border:1px solid var(--border); border-radius:10px; overflow:hidden; }
+.rec-table table { width:100%; border-collapse:collapse; font-size:12px; }
+.rec-table thead { background:var(--wa-dark); }
+.rec-table thead th { padding:9px 13px; text-align:left; font-size:10px; text-transform:uppercase; letter-spacing:0.8px; color:rgba(255,255,255,0.7); font-weight:700; }
+.rec-table tbody tr { border-top:1px solid var(--border); transition:background 0.12s; }
+.rec-table tbody tr:hover { background:#f9fafb; }
+.rec-table td { padding:10px 13px; }
+.rec-table input[type=checkbox] { accent-color:var(--wa); width:14px; height:14px; cursor:pointer; }
+
+.status-pill {
+  padding:2px 9px; border-radius:20px; font-size:10px; font-weight:700;
+  display:inline-block;
+}
+.sp-paid { background:#dcfce7; color:#15803d; }
+.sp-pending { background:#fef9c3; color:#854d0e; }
+.sp-overdue { background:#fee2e2; color:#b91c1c; }
+.sp-partial { background:#ede9fe; color:#5b21b6; }
+
+/* SEND QUEUE */
+.queue-panel {
+  background:var(--white); border:1px solid var(--border);
+  border-radius:var(--r); padding:20px; margin-top:18px; display:none;
+}
+.queue-panel.show { display:block; animation:pop 0.3s cubic-bezier(0.34,1.56,0.64,1); }
+.queue-title { font-size:14px; font-weight:800; margin-bottom:4px; }
+.queue-sub { font-size:12px; color:var(--muted); margin-bottom:14px; }
+
+.queue-list { display:flex; flex-direction:column; gap:8px; max-height:320px; overflow-y:auto; }
+.q-item {
+  display:flex; align-items:center; gap:12px;
+  background:var(--bg); border:1px solid var(--border);
+  border-radius:10px; padding:10px 14px;
+  transition:all 0.2s;
+}
+.q-item.sent { border-color:rgba(37,211,102,0.3); background:var(--wa-light); }
+.q-item.sending { border-color:var(--wa); background:var(--wa-light); animation:pulse 1s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.7} }
+
+.q-num { font-family:var(--mono); font-size:11px; color:var(--muted); width:28px; text-align:right; flex-shrink:0; }
+.q-name { font-weight:700; font-size:13px; flex:1; }
+.q-phone { font-family:var(--mono); font-size:11px; color:var(--muted); }
+.q-action button {
+  padding:6px 14px; border-radius:7px; font-size:12px; font-weight:700;
+  font-family:var(--font); cursor:pointer; border:none;
+  background:var(--wa); color:#fff; transition:all 0.15s;
+  display:flex; align-items:center; gap:5px;
+}
+.q-action button:hover { background:var(--wa-mid); }
+.q-action button.done { background:#dcfce7; color:#15803d; cursor:default; }
+.q-action button.no-phone { background:#f3f4f6; color:var(--muted); cursor:not-allowed; }
+
+.progress-bar { height:8px; background:var(--bg); border-radius:99px; overflow:hidden; margin:10px 0; border:1px solid var(--border); }
+.progress-fill { height:100%; background:linear-gradient(90deg,var(--wa),var(--wa-mid)); border-radius:99px; transition:width 0.4s ease; }
+.progress-stats { display:flex; justify-content:space-between; font-size:12px; font-weight:700; }
+.progress-stats .done-count { color:var(--wa-dark); font-family:var(--mono); }
+
+/* CSV EXPORT PREVIEW */
+.export-preview {
+  background:var(--bg); border:1px solid var(--border); border-radius:10px;
+  padding:14px; margin-top:14px; font-size:12px; font-family:var(--mono);
+  color:var(--muted); max-height:120px; overflow-y:auto; line-height:1.8;
+}
+
+/* EMPTY */
+.empty { text-align:center; padding:50px 20px; color:var(--muted); }
+.empty .ei { font-size:44px; margin-bottom:12px; }
+.empty h3 { font-size:15px; font-weight:800; color:var(--text); margin-bottom:5px; }
+.empty p { font-size:12px; }
+
+/* TOAST */
+.toast {
+  position:fixed; bottom:22px; right:22px;
+  background:var(--wa-dark); color:#fff;
+  border-radius:12px; padding:12px 18px;
+  font-size:13px; font-weight:700;
+  display:flex; align-items:center; gap:8px;
+  z-index:999; transform:translateY(60px); opacity:0;
+  transition:all 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  box-shadow:0 8px 24px rgba(7,94,84,0.3);
+}
+.toast.show { transform:translateY(0); opacity:1; }
+.toast.red { background:var(--danger); }
+
+/* HISTORY */
+.hist-item {
+  background:var(--white); border:1px solid var(--border);
+  border-radius:12px; padding:14px 18px;
+  display:flex; align-items:center; gap:14px; margin-bottom:10px;
+}
+.hi-icon { font-size:22px; width:42px; height:42px; background:var(--wa-light); border-radius:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.hi-body { flex:1; }
+.hi-title { font-size:13px; font-weight:800; }
+.hi-meta { font-size:11px; color:var(--muted); margin-top:2px; }
+.hi-count { text-align:right; }
+.hi-count .n { font-size:20px; font-weight:900; color:var(--wa-dark); font-family:var(--mono); }
+.hi-count .l { font-size:10px; color:var(--muted); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="brand-icon">💬</div>
+    <div>
+      <h1>Free WA Sender</h1>
+      <p>Gopalji Memorial School · 100% Free · No API Needed</p>
+    </div>
+  </div>
+  <div class="header-tabs">
+    <button class="htab active" onclick="nav('send',this)">📤 Send Messages</button>
+    <button class="htab" onclick="nav('history',this)">📋 History</button>
+  </div>
+  <div class="header-right">
+    <div class="pill"><span></span> Free Forever</div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+
+    <div class="slabel">📂 Step 1 · Upload Simption CSV</div>
+    <div class="upload-area" id="drop-zone">
+      <input type="file" id="csv-input" accept=".csv" onchange="loadFile(this.files[0])">
+      <div class="uico">📊</div>
+      <h4>Drop Simption Export Here</h4>
+      <p>Export any report from Simption<br>as CSV and drop it here</p>
+    </div>
+    <div id="file-badge"></div>
+
+    <div class="slabel">🔗 Step 2 · Map Columns</div>
+    <div class="map-grid" id="map-grid">
+      <div style="font-size:11px;color:var(--muted);text-align:center;padding:8px">Upload CSV to map columns</div>
+    </div>
+
+    <div class="slabel">🔍 Step 3 · Filter Recipients</div>
+    <div class="filter-stack">
+      <div class="fitem">
+        <label>Class / Section</label>
+        <select id="f-class" onchange="applyFilters()"><option value="">All Classes</option></select>
+      </div>
+      <div class="fitem">
+        <label>Fee Status</label>
+        <select id="f-status" onchange="applyFilters()">
+          <option value="">All</option>
+          <option value="overdue">Overdue only</option>
+          <option value="pending">Pending / Partial</option>
+          <option value="paid">Paid</option>
+        </select>
+      </div>
+      <div class="fitem">
+        <label>Min Balance Due (₹)</label>
+        <input type="number" id="f-bal" placeholder="0" oninput="applyFilters()">
+      </div>
+    </div>
+
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- SEND PAGE -->
+    <div class="page active" id="page-send">
+
+      <!-- HOW IT WORKS -->
+      <div class="how-banner">
+        <div class="how-step">
+          <div class="how-num">1</div>
+          <div class="how-text">Upload CSV from Simption</div>
+        </div>
+        <div class="how-arrow">→</div>
+        <div class="how-step">
+          <div class="how-num">2</div>
+          <div class="how-text">Pick message type & edit template</div>
+        </div>
+        <div class="how-arrow">→</div>
+        <div class="how-step">
+          <div class="how-num">3</div>
+          <div class="how-text">Click Send — opens WhatsApp with message pre-filled</div>
+        </div>
+        <div class="how-arrow">→</div>
+        <div class="how-step">
+          <div class="how-num">4</div>
+          <div class="how-text">Just hit Send in WhatsApp ✅</div>
+        </div>
+      </div>
+
+      <!-- STEP 4: MESSAGE TYPE -->
+      <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:10px;">Step 4 · Choose Message Type</div>
+      <div class="type-grid">
+        <div class="type-card active" onclick="pickType(this,'fee_reminder')">
+          <div class="ticon">💰</div>
+          <div class="tname">Fee Reminder</div>
+          <div class="tdesc">Upcoming due date</div>
+        </div>
+        <div class="type-card" onclick="pickType(this,'fee_overdue')">
+          <div class="ticon">⚠️</div>
+          <div class="tname">Fee Overdue</div>
+          <div class="tdesc">Urgent overdue notice</div>
+        </div>
+        <div class="type-card" onclick="pickType(this,'absent')">
+          <div class="ticon">🚨</div>
+          <div class="tname">Absent Alert</div>
+          <div class="tdesc">Today's absence</div>
+        </div>
+        <div class="type-card" onclick="pickType(this,'attendance')">
+          <div class="ticon">📅</div>
+          <div class="tname">Attendance Report</div>
+          <div class="tdesc">Monthly summary</div>
+        </div>
+        <div class="type-card" onclick="pickType(this,'exam')">
+          <div class="ticon">📝</div>
+          <div class="tname">Exam Timetable</div>
+          <div class="tdesc">Upcoming exams</div>
+        </div>
+        <div class="type-card" onclick="pickType(this,'result')">
+          <div class="ticon">🏆</div>
+          <div class="tname">Result</div>
+          <div class="tdesc">Marks & grades</div>
+        </div>
+        <div class="type-card" onclick="pickType(this,'salary')">
+          <div class="ticon">💼</div>
+          <div class="tname">Salary Slip</div>
+          <div class="tdesc">Staff salary detail</div>
+        </div>
+        <div class="type-card" onclick="pickType(this,'custom')">
+          <div class="ticon">✏️</div>
+          <div class="tname">Custom</div>
+          <div class="tdesc">Write your own</div>
+        </div>
+      </div>
+
+      <!-- COMPOSE + PHONE PREVIEW -->
+      <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:10px;">Step 5 · Edit & Send</div>
+      <div class="compose-row">
+        <div>
+          <div class="card">
+            <div class="card-head">
+              <h3 id="compose-title">💰 Fee Reminder</h3>
+              <div class="lang-btns">
+                <button class="lang-btn active" onclick="setLang('en',this)">EN</button>
+                <button class="lang-btn" onclick="setLang('hi',this)">HI</button>
+              </div>
+            </div>
+
+            <textarea class="editor" id="msg-editor" oninput="livePreview()"></textarea>
+
+            <div class="chips" id="chips"></div>
+
+            <div class="action-bar">
+              <button class="btn btn-wa" onclick="buildQueue()">
+                💬 Open WhatsApp for All
+              </button>
+              <button class="btn btn-csv" onclick="exportCSV()">
+                ⬇ Export Links as CSV
+              </button>
+              <button class="btn btn-ghost btn-sm" onclick="copyAllLinks()">
+                📋 Copy All Links
+              </button>
+            </div>
+          </div>
+
+          <!-- RECIPIENTS -->
+          <div class="rec-panel">
+            <div class="rec-toolbar">
+              <div class="rec-count" id="rec-count">Upload CSV to load recipients</div>
+              <div style="display:flex;gap:6px;">
+                <button class="btn btn-ghost btn-sm" onclick="selAll(true)">✓ Select All</button>
+                <button class="btn btn-ghost btn-sm" onclick="selAll(false)">✗ Deselect</button>
+              </div>
+            </div>
+            <div id="rec-table">
+              <div class="empty"><div class="ei">📤</div><h3>No data yet</h3><p>Upload your Simption CSV export to see recipients</p></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PHONE MOCKUP -->
+        <div style="position:sticky;top:20px;">
+          <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:10px;text-align:center;">📱 Live Preview</div>
+          <div class="phone-outer">
+            <div class="phone-inner">
+              <div class="phone-top">
+                <div style="color:rgba(255,255,255,0.7);font-size:18px;">‹</div>
+                <div class="p-avatar">👨‍👩‍👧</div>
+                <div>
+                  <div class="p-name">Parent</div>
+                  <div class="p-status">Gopalji Memorial School</div>
+                </div>
+              </div>
+              <div class="phone-msgs">
+                <div class="wa-msg" id="wa-preview">Select a message type above...</div>
+                <div class="wa-time" id="wa-time">Now ✓✓</div>
+              </div>
+            </div>
+          </div>
+          <div style="margin-top:12px;background:var(--wa-light);border:1px solid rgba(37,211,102,0.3);border-radius:10px;padding:10px 12px;font-size:11px;color:var(--wa-dark);font-weight:600;line-height:1.6;text-align:center;">
+            ✅ 100% Free<br>No API · No subscription<br>Just click & send!
+          </div>
+        </div>
+      </div>
+
+      <!-- SEND QUEUE -->
+      <div class="queue-panel" id="queue-panel">
+        <div class="queue-title">📬 Send Queue</div>
+        <div class="queue-sub">Click the WhatsApp button for each recipient. Message is pre-filled — just hit Send!</div>
+        <div class="progress-bar"><div class="progress-fill" id="q-fill" style="width:0%"></div></div>
+        <div class="progress-stats">
+          <div style="color:var(--muted);font-size:12px;" id="q-status">Ready to send</div>
+          <div class="done-count" id="q-count">0 / 0 sent</div>
+        </div>
+        <div class="queue-list" id="queue-list"></div>
+      </div>
+
+    </div>
+
+    <!-- HISTORY PAGE -->
+    <div class="page" id="page-history">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
+        <div>
+          <h2 style="font-size:18px;font-weight:900;">Send History</h2>
+          <p style="font-size:12px;color:var(--muted);margin-top:2px;">All message campaigns sent from this device</p>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="clearHistory()">🗑 Clear</button>
+      </div>
+      <div id="hist-list">
+        <div class="empty"><div class="ei">📭</div><h3>No history yet</h3><p>Sent messages will appear here</p></div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────────
+let rows = [], headers = [], filtered = [];
+let colMap = { name:'', phone:'', parent:'', cls:'', balance:'', paid:'', date:'', subject:'', marks:'' };
+let activeLang = 'en';
+let activeType = 'fee_reminder';
+let sentCount = 0;
+let history = JSON.parse(localStorage.getItem('wa_history')||'[]');
+let queueSent = 0, queueTotal = 0;
+
+// ── TEMPLATES ─────────────────────────────────────────────────────────────
+const T = {
+  fee_reminder: {
+    title: '💰 Fee Reminder',
+    vars: ['{name}','{parent}','{class}','{balance}','{date}'],
+    en: `Dear *{parent}*,
+
+This is a friendly reminder that the school fee for *{name}* ({class}) is pending.
+
+💰 Amount Due: *₹{balance}*
+📅 Last Date: *{date}*
+
+Please pay at the school office or via UPI to avoid late charges.
+
+Thank you 🙏
+*Gopalji Memorial School, Lucknow*`,
+    hi: `प्रिय *{parent}*,
+
+यह सूचना है कि *{name}* ({class}) की स्कूल फीस बकाया है।
+
+💰 बकाया राशि: *₹{balance}*
+📅 अंतिम तिथि: *{date}*
+
+कृपया शीघ्र भुगतान करें।
+
+धन्यवाद 🙏
+*गोपालजी मेमोरियल स्कूल, लखनऊ*`
+  },
+  fee_overdue: {
+    title: '⚠️ Fee Overdue Warning',
+    vars: ['{name}','{parent}','{class}','{balance}'],
+    en: `Dear *{parent}*,
+
+⚠️ *URGENT — Fee Overdue*
+
+The fee for *{name}* ({class}) is now *overdue*.
+
+💰 Outstanding: *₹{balance}*
+
+Immediate payment is required. Please visit the school office or contact us urgently.
+
+*Gopalji Memorial School, Lucknow*
+📞 Contact office immediately`,
+    hi: `प्रिय *{parent}*,
+
+⚠️ *अति आवश्यक — फीस बकाया*
+
+*{name}* ({class}) की फीस अब *अतिदेय* है।
+
+💰 बकाया: *₹{balance}*
+
+कृपया तुरंत कार्यालय से संपर्क करें।
+
+*गोपालजी मेमोरियल स्कूल, लखनऊ*`
+  },
+  absent: {
+    title: '🚨 Absent Alert',
+    vars: ['{name}','{parent}','{class}','{date}'],
+    en: `Dear *{parent}*,
+
+🚨 *Absent Alert*
+
+Your child *{name}* ({class}) was marked *ABSENT* today, *{date}*.
+
+If this was pre-planned, please inform the class teacher. If unexpected, kindly contact the school immediately.
+
+*Gopalji Memorial School, Lucknow*`,
+    hi: `प्रिय *{parent}*,
+
+🚨 *अनुपस्थिति सूचना*
+
+आपका बच्चा *{name}* ({class}) आज *{date}* को *अनुपस्थित* था।
+
+कृपया विद्यालय से संपर्क करें।
+
+*गोपालजी मेमोरियल स्कूल, लखनऊ*`
+  },
+  attendance: {
+    title: '📅 Attendance Report',
+    vars: ['{name}','{parent}','{class}','{paid}','{balance}','{date}'],
+    en: `Dear *{parent}*,
+
+📅 *Monthly Attendance Report*
+
+Student: *{name}* ({class})
+📆 Month: {date}
+✅ Present: *{paid} days*
+❌ Absent: *{balance} days*
+
+Please ensure regular attendance for your child's academic progress.
+
+*Gopalji Memorial School, Lucknow*`,
+    hi: `प्रिय *{parent}*,
+
+📅 *मासिक उपस्थिति रिपोर्ट*
+
+छात्र: *{name}* ({class})
+✅ उपस्थित: *{paid} दिन*
+❌ अनुपस्थित: *{balance} दिन*
+
+*गोपालजी मेमोरियल स्कूल, लखनऊ*`
+  },
+  exam: {
+    title: '📝 Exam Timetable',
+    vars: ['{name}','{parent}','{class}','{date}','{subject}'],
+    en: `Dear *{parent}*,
+
+📝 *Exam Timetable — {class}*
+
+Student: *{name}*
+Exams begin: *{date}*
+
+📚 Schedule:
+{subject}
+
+Please ensure your child is well prepared. Best of luck! 🌟
+
+*Gopalji Memorial School, Lucknow*`,
+    hi: `प्रिय *{parent}*,
+
+📝 *परीक्षा समय-सारणी — {class}*
+
+छात्र: *{name}*
+परीक्षा प्रारंभ: *{date}*
+
+{subject}
+
+शुभकामनाएं! 🌟
+*गोपालजी मेमोरियल स्कूल, लखनऊ*`
+  },
+  result: {
+    title: '🏆 Exam Result',
+    vars: ['{name}','{parent}','{class}','{subject}','{marks}','{date}'],
+    en: `Dear *{parent}*,
+
+🏆 *Exam Result — {name}* ({class})
+
+📝 Exam: {subject}
+📅 Date: {date}
+📊 Marks: *{marks}*
+
+We appreciate your child's efforts. Please visit school to collect the report card.
+
+*Gopalji Memorial School, Lucknow*`,
+    hi: `प्रिय *{parent}*,
+
+🏆 *परीक्षा परिणाम — {name}* ({class})
+
+📊 प्राप्तांक: *{marks}*
+📝 विषय: {subject}
+
+*गोपालजी मेमोरियल स्कूल, लखनऊ*`
+  },
+  salary: {
+    title: '💼 Salary Slip',
+    vars: ['{name}','{subject}','{balance}','{paid}','{marks}','{date}'],
+    en: `Dear *{name}*,
+
+💼 *Salary Slip — {date}*
+
+Designation: {subject}
+Gross Salary: *₹{balance}*
+Deductions: ₹{paid}
+*Net Salary: ₹{marks}*
+
+Salary has been credited to your registered bank account.
+
+*Gopalji Memorial School, Lucknow*`,
+    hi: `प्रिय *{name}*,
+
+💼 *वेतन पर्ची — {date}*
+
+सकल वेतन: *₹{balance}*
+कटौती: ₹{paid}
+*शुद्ध वेतन: ₹{marks}*
+
+*गोपालजी मेमोरियल स्कूल, लखनऊ*`
+  },
+  custom: {
+    title: '✏️ Custom Message',
+    vars: ['{name}','{parent}','{class}','{balance}','{date}','{subject}','{marks}','{paid}'],
+    en: `Dear *{parent}*,
+
+{subject}
+
+*Gopalji Memorial School, Lucknow*`,
+    hi: `प्रिय *{parent}*,
+
+{subject}
+
+*गोपालजी मेमोरियल स्कूल, लखनऊ*`
+  }
+};
+
+const typeIcons = { fee_reminder:'💰', fee_overdue:'⚠️', absent:'🚨', attendance:'📅', exam:'📝', result:'🏆', salary:'💼', custom:'✏️' };
+
+// ── NAV ───────────────────────────────────────────────────────────────────
+function nav(page, el) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.htab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  el.classList.add('active');
+  if(page==='history') renderHistory();
+}
+
+// ── FILE LOAD ─────────────────────────────────────────────────────────────
+function loadFile(file) {
+  if(!file) return;
+  Papa.parse(file, {
+    header:true, skipEmptyLines:true,
+    complete(res) {
+      rows = res.data;
+      headers = res.meta.fields || [];
+      filtered = [...rows];
+      renderFileBadge(file.name);
+      renderMapper();
+      renderClassFilter();
+      renderRecipients();
+      toast(`✅ Loaded ${rows.length} records`, '');
+    }
+  });
+}
+
+function renderFileBadge(name) {
+  document.getElementById('file-badge').innerHTML = `
+    <div class="file-badge">
+      <div class="fi">📊</div>
+      <div><div class="fn">${name}</div><div class="fr">${rows.length} rows loaded</div></div>
+    </div>`;
+}
+
+// ── MAPPER ────────────────────────────────────────────────────────────────
+const KEYS = ['name','phone','parent','cls','balance','paid','date','subject','marks'];
+const KLABELS = ['Student Name','Phone / WA No.','Parent Name','Class / Section','Balance Due','Paid / Present','Date','Subject / Note','Marks / Score'];
+
+function renderMapper() {
+  const g = document.getElementById('map-grid');
+  g.innerHTML = KEYS.map((k,i) => {
+    const auto = headers.find(h => h.toLowerCase().replace(/[\s_]/g,'').includes(k==='cls'?'class':k)) || '';
+    if(auto) colMap[k] = auto;
+    return `<div class="map-row">
+      <div class="map-key">${KLABELS[i]}</div>
+      <select onchange="colMap['${k}']=this.value;renderRecipients();livePreview()">
+        <option value="">— skip —</option>
+        ${headers.map(h=>`<option value="${h}"${h===auto?' selected':''}>${h}</option>`).join('')}
+      </select>
+    </div>`;
+  }).join('');
+}
+
+function get(row,k) { return colMap[k] ? (row[colMap[k]]||'') : ''; }
+
+// ── CLASS FILTER ──────────────────────────────────────────────────────────
+function renderClassFilter() {
+  const col = colMap.cls || headers.find(h=>h.toLowerCase().includes('class'))||'';
+  const classes = [...new Set(rows.map(r=>r[col]).filter(Boolean))].sort();
+  const sel = document.getElementById('f-class');
+  sel.innerHTML = '<option value="">All Classes</option>'+classes.map(c=>`<option>${c}</option>`).join('');
+}
+
+function applyFilters() {
+  const cls = document.getElementById('f-class').value;
+  const st = document.getElementById('f-status').value;
+  const bal = parseFloat(document.getElementById('f-bal').value)||0;
+  filtered = rows.filter(r => {
+    if(cls && get(r,'cls')!==cls) return false;
+    if(bal) { const b=parseFloat(get(r,'balance'))||0; if(b<bal) return false; }
+    if(st) {
+      const b=parseFloat(get(r,'balance'))||0, p=parseFloat(get(r,'paid'))||0;
+      if(st==='overdue' && !(b>0 && p===0)) return false;
+      if(st==='pending' && !(b>0 && p>0)) return false;
+      if(st==='paid' && b!==0) return false;
+    }
+    return true;
+  });
+  renderRecipients();
+}
+
+// ── RENDER RECIPIENTS ─────────────────────────────────────────────────────
+function renderRecipients() {
+  const el = document.getElementById('rec-table');
+  if(!filtered.length) {
+    el.innerHTML = '<div class="empty"><div class="ei">🔍</div><h3>No matches</h3><p>Adjust filters</p></div>';
+    document.getElementById('rec-count').innerHTML = 'No recipients found';
+    return;
+  }
+  document.getElementById('rec-count').innerHTML = `<span>${filtered.length}</span> recipients ready`;
+  const show = filtered.slice(0,100);
+  el.innerHTML = `<div class="rec-table"><table>
+    <thead><tr>
+      <th><input type="checkbox" id="chk-all" checked onchange="selAll(this.checked)"></th>
+      <th>Name</th><th>Class</th><th>Phone</th><th>Balance</th><th>Status</th>
+    </tr></thead>
+    <tbody>${show.map((r,i) => {
+      const name=get(r,'name')||r[headers[0]]||'Student';
+      const cls=get(r,'cls'), phone=get(r,'phone');
+      const bal=parseFloat(get(r,'balance'))||0;
+      const paid=parseFloat(get(r,'paid'))||0;
+      const st = bal>0&&paid===0?'overdue': bal>0&&paid>0?'partial': paid>0?'paid':'pending';
+      return `<tr>
+        <td><input type="checkbox" class="rchk" data-i="${i}" checked></td>
+        <td style="font-weight:700">${name}</td>
+        <td style="color:var(--muted)">${cls||'—'}</td>
+        <td style="font-family:var(--mono);font-size:11px;color:var(--muted)">${phone||'—'}</td>
+        <td style="font-family:var(--mono);color:var(--danger)">${bal?'₹'+bal.toLocaleString('en-IN'):'—'}</td>
+        <td><span class="status-pill sp-${st}">${st}</span></td>
+      </tr>`;
+    }).join('')}
+    ${filtered.length>100?`<tr><td colspan="6" style="text-align:center;padding:10px;color:var(--muted);font-size:11px;">...and ${filtered.length-100} more</td></tr>`:''}
+    </tbody></table></div>`;
+}
+
+function selAll(v) { document.querySelectorAll('.rchk').forEach(c=>c.checked=v); const a=document.getElementById('chk-all'); if(a)a.checked=v; }
+
+// ── MESSAGE TYPE ──────────────────────────────────────────────────────────
+function pickType(el, type) {
+  document.querySelectorAll('.type-card').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  activeType = type;
+  document.getElementById('compose-title').textContent = T[type].title;
+  document.getElementById('msg-editor').value = T[type][activeLang];
+  renderChips(T[type].vars);
+  livePreview();
+}
+
+function setLang(lang, el) {
+  activeLang = lang;
+  document.querySelectorAll('.lang-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('msg-editor').value = T[activeType][lang];
+  livePreview();
+}
+
+function renderChips(vars) {
+  document.getElementById('chips').innerHTML = vars.map(v =>
+    `<span class="chip" onclick="insertVar('${v}')">${v}</span>`
+  ).join('');
+}
+
+function insertVar(v) {
+  const ta=document.getElementById('msg-editor');
+  const s=ta.selectionStart,e=ta.selectionEnd;
+  ta.value=ta.value.slice(0,s)+v+ta.value.slice(e);
+  ta.selectionStart=ta.selectionEnd=s+v.length;
+  ta.focus(); livePreview();
+}
+
+// ── LIVE PREVIEW ──────────────────────────────────────────────────────────
+function livePreview() {
+  const tmpl = document.getElementById('msg-editor').value;
+  const sample = filtered[0] || rows[0] || {};
+  const filled = fillMsg(tmpl, sample);
+  document.getElementById('wa-preview').innerHTML = filled
+    .replace(/\*([^*\n]+)\*/g,'<strong>$1</strong>')
+    .replace(/\n/g,'<br>');
+  document.getElementById('wa-time').textContent =
+    new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})+' ✓✓';
+}
+
+function fillMsg(tmpl, row) {
+  return tmpl
+    .replace(/{name}/g,   get(row,'name')||row[headers[0]]||'Student')
+    .replace(/{parent}/g, get(row,'parent')||'Parent')
+    .replace(/{class}/g,  get(row,'cls')||'Class')
+    .replace(/{balance}/g,get(row,'balance')||'0')
+    .replace(/{paid}/g,   get(row,'paid')||'0')
+    .replace(/{date}/g,   get(row,'date')||new Date().toLocaleDateString('en-IN'))
+    .replace(/{subject}/g,get(row,'subject')||'')
+    .replace(/{marks}/g,  get(row,'marks')||'');
+}
+
+// ── BUILD QUEUE ───────────────────────────────────────────────────────────
+function buildQueue() {
+  const selected = getSelected();
+  if(!selected.length) { toast('⚠️ No recipients selected','red'); return; }
+  if(!rows.length) { toast('⚠️ Upload CSV first','red'); return; }
+
+  const qp = document.getElementById('queue-panel');
+  qp.classList.add('show');
+  qp.scrollIntoView({behavior:'smooth', block:'start'});
+
+  const tmpl = document.getElementById('msg-editor').value;
+  queueTotal = selected.length;
+  queueSent = 0;
+
+  document.getElementById('q-fill').style.width = '0%';
+  document.getElementById('q-count').textContent = `0 / ${queueTotal} sent`;
+  document.getElementById('q-status').textContent = 'Click each green button to send';
+
+  const ql = document.getElementById('queue-list');
+  ql.innerHTML = selected.map((row,i) => {
+    const name = get(row,'name')||row[headers[0]]||'Student '+i;
+    const phone = get(row,'phone')||'';
+    const msg = fillMsg(tmpl, row);
+    const clean = phone.replace(/[^0-9]/g,'');
+    const num = clean.length===10?'91'+clean:clean;
+    const link = num ? `https://wa.me/${num}?text=${encodeURIComponent(msg)}` : '';
+    const hasPhone = !!num;
+
+    return `<div class="q-item" id="qi-${i}">
+      <div class="q-num">${i+1}</div>
+      <div>
+        <div class="q-name">${name}</div>
+        <div class="q-phone">${phone||'No phone number'}</div>
+      </div>
+      <div class="q-action">
+        ${hasPhone
+          ? `<button onclick="sendOne(${i},'${link}')" id="qb-${i}">💬 Send on WhatsApp</button>`
+          : `<button class="no-phone" disabled>No Phone</button>`
+        }
+      </div>
+    </div>`;
+  }).join('');
+
+  // Save to history
+  saveHistory(activeType, selected.length);
+  toast(`📬 Queue ready — ${selected.length} messages to send!`, '');
+}
+
+function sendOne(idx, link) {
+  window.open(link, '_blank');
+  const btn = document.getElementById('qb-'+idx);
+  const item = document.getElementById('qi-'+idx);
+  if(btn) { btn.textContent='✅ Sent'; btn.className='done'; }
+  if(item) item.classList.add('sent');
+  queueSent++;
+  const pct = Math.round(queueSent/queueTotal*100);
+  document.getElementById('q-fill').style.width = pct+'%';
+  document.getElementById('q-count').textContent = `${queueSent} / ${queueTotal} sent`;
+  if(queueSent===queueTotal) {
+    document.getElementById('q-status').textContent = '🎉 All messages sent!';
+    toast('🎉 All messages sent successfully!','');
+  }
+}
+
+function getSelected() {
+  const checked = document.querySelectorAll('.rchk:checked');
+  const indices = [...checked].map(c=>parseInt(c.dataset.i));
+  return indices.map(i=>filtered[i]).filter(Boolean);
+}
+
+// ── EXPORT CSV ────────────────────────────────────────────────────────────
+function exportCSV() {
+  const selected = getSelected();
+  if(!selected.length) { toast('⚠️ No recipients selected','red'); return; }
+  const tmpl = document.getElementById('msg-editor').value;
+  const lines = ['No,Name,Class,Phone,WhatsApp Link,Message Preview'];
+  selected.forEach((row,i) => {
+    const name = get(row,'name')||row[headers[0]]||'Student';
+    const cls = get(row,'cls')||'';
+    const phone = (get(row,'phone')||'').replace(/[^0-9]/g,'');
+    const num = phone.length===10?'91'+phone:phone;
+    const msg = fillMsg(tmpl,row);
+    const link = num ? `https://wa.me/${num}?text=${encodeURIComponent(msg)}` : '';
+    const preview = msg.slice(0,80).replace(/"/g,"'").replace(/\n/g,' ');
+    lines.push(`${i+1},"${name}","${cls}","${phone}","${link}","${preview}..."`);
+  });
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(lines.join('\n'));
+  a.download=`wa_links_${activeType}_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  toast(`📥 Exported ${selected.length} WhatsApp links as CSV!`,'');
+}
+
+function copyAllLinks() {
+  const selected = getSelected();
+  if(!selected.length) { toast('⚠️ No recipients selected','red'); return; }
+  const tmpl = document.getElementById('msg-editor').value;
+  const links = selected.map(row => {
+    const phone=(get(row,'phone')||'').replace(/[^0-9]/g,'');
+    const num=phone.length===10?'91'+phone:phone;
+    const msg=fillMsg(tmpl,row);
+    return num?`https://wa.me/${num}?text=${encodeURIComponent(msg)}`:'(no phone)';
+  }).join('\n');
+  navigator.clipboard.writeText(links).then(()=>toast(`📋 Copied ${selected.length} links!`,''));
+}
+
+// ── HISTORY ───────────────────────────────────────────────────────────────
+function saveHistory(type, count) {
+  history.unshift({ type, count, time: new Date().toISOString() });
+  history = history.slice(0,50);
+  localStorage.setItem('wa_history', JSON.stringify(history));
+}
+
+function renderHistory() {
+  const el = document.getElementById('hist-list');
+  if(!history.length) {
+    el.innerHTML='<div class="empty"><div class="ei">📭</div><h3>No history yet</h3><p>Send messages to see history here</p></div>';
+    return;
+  }
+  const typeNames = { fee_reminder:'Fee Reminder', fee_overdue:'Fee Overdue Warning', absent:'Absent Alert', attendance:'Attendance Report', exam:'Exam Timetable', result:'Result / Marksheet', salary:'Salary Slip', custom:'Custom Message' };
+  el.innerHTML = history.map(h => `
+    <div class="hist-item">
+      <div class="hi-icon">${typeIcons[h.type]||'📲'}</div>
+      <div class="hi-body">
+        <div class="hi-title">${typeNames[h.type]||'Message'} Campaign</div>
+        <div class="hi-meta">${new Date(h.time).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})} at ${new Date(h.time).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}</div>
+      </div>
+      <div class="hi-count"><div class="n">${h.count}</div><div class="l">messages</div></div>
+    </div>`).join('');
+}
+
+function clearHistory() {
+  history=[];
+  localStorage.removeItem('wa_history');
+  renderHistory();
+  toast('History cleared','');
+}
+
+// ── TOAST ─────────────────────────────────────────────────────────────────
+function toast(msg, type) {
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className='toast '+(type||'')+' show';
+  clearTimeout(t._t);
+  t._t=setTimeout(()=>t.classList.remove('show'),3200);
+}
+
+// ── DRAG & DROP ───────────────────────────────────────────────────────────
+const dz=document.getElementById('drop-zone');
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag');});
+dz.addEventListener('dragleave',()=>dz.classList.remove('drag'));
+dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('drag');loadFile(e.dataTransfer.files[0]);});
+
+// ── INIT ──────────────────────────────────────────────────────────────────
+pickType(document.querySelector('.type-card.active'),'fee_reminder');
+renderHistory();
+</script>
+</body>
+</html>

@@ -596,10 +596,15 @@ This is a friendly reminder that the school fee for *{name}* ({class}) is pendin
 💰 Amount Due: *₹{balance}*
 📅 Last Date: *{date}*
 
-Please pay at the school office or via UPI to avoid late charges.
+*Pay instantly via UPI:*
+🔗 gpay://upi/pay?pa=7525099706@okbizaxis&pn=Gopal+Ji+Memorial+School&am={balance}&cu=INR
+📲 UPI ID: *7525099706@okbizaxis*
+📞 GPay / PhonePe: *7523005101*
+
+Accepted: GPay • PhonePe • Paytm • BHIM
 
 Thank you 🙏
-*Gopalji Memorial School, Lucknow*`,
+*Gopal Ji Memorial School, Lucknow*`,
     hi: `प्रिय *{parent}*,
 
 यह सूचना है कि *{name}* ({class}) की स्कूल फीस बकाया है।
@@ -607,10 +612,14 @@ Thank you 🙏
 💰 बकाया राशि: *₹{balance}*
 📅 अंतिम तिथि: *{date}*
 
-कृपया शीघ्र भुगतान करें।
+*UPI से तुरंत भुगतान करें:*
+📲 UPI ID: *7525099706@okbizaxis*
+📞 GPay / PhonePe: *7523005101*
+
+GPay • PhonePe • Paytm • BHIM स्वीकार्य है।
 
 धन्यवाद 🙏
-*गोपालजी मेमोरियल स्कूल, लखनऊ*`
+*गोपाल जी मेमोरियल स्कूल, लखनऊ*`
   },
   fee_overdue: {
     title: '⚠️ Fee Overdue Warning',
@@ -623,10 +632,13 @@ The fee for *{name}* ({class}) is now *overdue*.
 
 💰 Outstanding: *₹{balance}*
 
-Immediate payment is required. Please visit the school office or contact us urgently.
+*Pay NOW via UPI:*
+📲 UPI ID: *7525099706@okbizaxis*
+📞 GPay / PhonePe: *7523005101*
 
-*Gopalji Memorial School, Lucknow*
-📞 Contact office immediately`,
+Or visit the school office immediately.
+
+*Gopal Ji Memorial School, Lucknow*`,
     hi: `प्रिय *{parent}*,
 
 ⚠️ *अति आवश्यक — फीस बकाया*
@@ -635,9 +647,13 @@ Immediate payment is required. Please visit the school office or contact us urge
 
 💰 बकाया: *₹{balance}*
 
-कृपया तुरंत कार्यालय से संपर्क करें।
+*अभी UPI से भुगतान करें:*
+📲 UPI ID: *7525099706@okbizaxis*
+📞 GPay / PhonePe: *7523005101*
 
-*गोपालजी मेमोरियल स्कूल, लखनऊ*`
+कृपया तुरंत भुगतान करें।
+
+*गोपाल जी मेमोरियल स्कूल, लखनऊ*`
   },
   absent: {
     title: '🚨 Absent Alert',
@@ -792,19 +808,54 @@ function nav(page, el) {
 // ── FILE LOAD ─────────────────────────────────────────────────────────────
 function loadFile(file) {
   if(!file) return;
-  Papa.parse(file, {
-    header:true, skipEmptyLines:true,
-    complete(res) {
-      rows = res.data;
-      headers = res.meta.fields || [];
-      filtered = [...rows];
-      renderFileBadge(file.name);
-      renderMapper();
-      renderClassFilter();
-      renderRecipients();
-      toast(`✅ Loaded ${rows.length} records`, '');
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    let text = e.target.result;
+
+    // ── Simption CSV fix: skip junk header rows ──
+    // Find the real header row (contains 'Student Name' or 'S.No')
+    const lines = text.split('\n');
+    let headerIdx = 0;
+    for(let i=0; i<Math.min(10, lines.length); i++) {
+      if(lines[i].toLowerCase().includes('student name') || lines[i].match(/^s\.?no[,\t]/i)) {
+        headerIdx = i;
+        break;
+      }
     }
-  });
+    const cleanText = lines.slice(headerIdx).join('\n');
+
+    Papa.parse(cleanText, {
+      header: true,
+      skipEmptyLines: true,
+      transformHeader: h => h.trim(),
+      transform: (val) => {
+        // Strip ₹ symbol, commas, and whitespace from values
+        if(typeof val === 'string') {
+          const clean = val.replace(/₹/g,'').replace(/,/g,'').trim();
+          return clean;
+        }
+        return val;
+      },
+      complete(res) {
+        rows = res.data.filter(r => {
+          // Remove rows where first cell looks like a number (S.No) or is empty
+          const first = Object.values(r)[0];
+          return first && first !== '' && !isNaN(first) || (first && isNaN(first) && first.length > 1);
+        }).filter(r => {
+          // Remove completely empty rows
+          return Object.values(r).some(v => v && v.toString().trim() !== '');
+        });
+        headers = res.meta.fields || [];
+        filtered = [...rows];
+        renderFileBadge(file.name);
+        renderMapper();
+        renderClassFilter();
+        renderRecipients();
+        toast(`✅ Loaded ${rows.length} records from ${file.name}`, '');
+      }
+    });
+  };
+  reader.readAsText(file, 'UTF-8');
 }
 
 function renderFileBadge(name) {
@@ -819,10 +870,25 @@ function renderFileBadge(name) {
 const KEYS = ['name','phone','parent','cls','balance','paid','date','subject','marks'];
 const KLABELS = ['Student Name','Phone / WA No.','Parent Name','Class / Section','Balance Due','Paid / Present','Date','Subject / Note','Marks / Score'];
 
+// Simption column aliases
+const SIMPTION_MAP = {
+  name:    ['student name','name'],
+  phone:   ['contact number','contact','phone','mobile'],
+  parent:  ["father's name",'father name','parent'],
+  cls:     ['class','section'],
+  balance: ['balance due','balance','outstanding'],
+  paid:    ['paid','amount paid'],
+  date:    ['date','due date'],
+  subject: ['subject','remarks'],
+  marks:   ['marks','score','priority','status']
+};
+
 function renderMapper() {
   const g = document.getElementById('map-grid');
   g.innerHTML = KEYS.map((k,i) => {
-    const auto = headers.find(h => h.toLowerCase().replace(/[\s_]/g,'').includes(k==='cls'?'class':k)) || '';
+    const aliases = SIMPTION_MAP[k] || [k];
+    const auto = headers.find(h => aliases.some(a => h.toLowerCase().trim() === a)) ||
+                 headers.find(h => aliases.some(a => h.toLowerCase().includes(a))) || '';
     if(auto) colMap[k] = auto;
     return `<div class="map-row">
       <div class="map-key">${KLABELS[i]}</div>
@@ -977,6 +1043,7 @@ function buildQueue() {
   ql.innerHTML = selected.map((row,i) => {
     const name = get(row,'name')||row[headers[0]]||'Student '+i;
     const phone = get(row,'phone')||'';
+    const bal = (get(row,'balance')||'').replace(/[^0-9.]/g,'');
     const msg = fillMsg(tmpl, row);
     const clean = phone.replace(/[^0-9]/g,'');
     const num = clean.length===10?'91'+clean:clean;
@@ -994,6 +1061,7 @@ function buildQueue() {
           ? `<button onclick="sendOne(${i},'${link}')" id="qb-${i}">💬 Send on WhatsApp</button>`
           : `<button class="no-phone" disabled>No Phone</button>`
         }
+        ${bal ? `<a href="upi://pay?pa=7525099706@okbizaxis&pn=Gopal+Ji+Memorial+School&am=${bal}&cu=INR&tn=Fee-${encodeURIComponent(name)}" style="padding:6px 10px;border-radius:7px;font-size:11px;font-weight:700;background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0;text-decoration:none;white-space:nowrap;" target="_blank">💳 Pay ₹${bal}</a>` : ''}
       </div>
     </div>`;
   }).join('');
